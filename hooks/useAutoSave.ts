@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
 
 export function useAutoSave(noteId: string, initialContent: string = "") {
 	const [content, setContent] = useState(initialContent);
@@ -11,18 +10,25 @@ export function useAutoSave(noteId: string, initialContent: string = "") {
 
 		setIsSaving(true);
 		try {
-			const { error } = await supabase.from("notes").upsert({
-				id: noteId,
-				content,
-				updated_at: new Date().toISOString(),
+			const response = await fetch("/api/notes", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					id: noteId,
+					content,
+				}),
 			});
 
-			if (error) throw error;
+			if (!response.ok) {
+				throw new Error("Failed to save note");
+			}
+
 			setLastSavedContent(content);
 		} catch (error) {
-			console.error("<><>Error saving note:", error);
+			console.error("Error saving note:", error);
 		} finally {
-			console.log("<><>Saving complete");
 			setIsSaving(false);
 		}
 	}, [content, lastSavedContent, noteId]);

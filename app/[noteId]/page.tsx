@@ -3,7 +3,6 @@ import dynamic from "next/dynamic";
 import React, { Suspense, useEffect, useState } from "react";
 import CopyableText from "../../components/CopyableText";
 import { useAutoSave } from "../../hooks/useAutoSave";
-import { supabase } from "../../lib/supabase";
 import styles from "../styles.module.css";
 
 const MDEditor = dynamic(
@@ -18,19 +17,17 @@ interface PageProps {
 }
 
 async function getInitialContent(noteId: string) {
-	const { data, error } = await supabase
-		.from("notes")
-		.select("content")
-		.eq("id", noteId)
-		.single();
-
-	if (error && error.code !== "PGRST116") {
-		// PGRST116 is "not found" error
+	try {
+		const response = await fetch(`/api/notes?id=${noteId}`);
+		if (!response.ok) {
+			throw new Error("Failed to fetch note");
+		}
+		const data = await response.json();
+		return data.content;
+	} catch (error) {
 		console.error("Error fetching note:", error);
-		throw error;
+		return "";
 	}
-
-	return data?.content || "";
 }
 
 export default function NotePage({ params }: PageProps) {
@@ -43,22 +40,17 @@ export default function NotePage({ params }: PageProps) {
 		if (isSaving) {
 			setShowSaving(true);
 		} else {
-			// Keep showing the indicator for 2 seconds after saving is complete
 			const timer = setTimeout(() => {
 				setShowSaving(false);
-			}, 1000);
+			}, 500);
 			return () => clearTimeout(timer);
 		}
 	}, [isSaving]);
 
 	useEffect(() => {
 		const loadContent = async () => {
-			try {
-				const initialContent = await getInitialContent(noteId);
-				setContent(initialContent);
-			} catch (error) {
-				console.error("Error loading content:", error);
-			}
+			const initialContent = await getInitialContent(noteId);
+			setContent(initialContent);
 		};
 		loadContent();
 	}, [noteId, setContent]);

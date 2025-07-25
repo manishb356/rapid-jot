@@ -6,7 +6,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-	title: "RapidJot - Quick Online Notes",
+	title: "RapidJot - Quick Notes with Markdown",
 	description: "A simple, fast online note-taking app with markdown support",
 };
 
