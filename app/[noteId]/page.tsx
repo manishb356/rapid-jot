@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 import dynamic from "next/dynamic";
 import React, { Suspense, useEffect, useState } from "react";
@@ -162,11 +161,16 @@ export default function NotePage({ params }: PageProps) {
 						visibleDragbar={false}
 						previewOptions={{
 							components: {
-								code: ({
-									children,
-								}: {
-									children: React.ReactNode;
-								}) => <CopyableText>{children}</CopyableText>,
+								code: (
+									props: React.HTMLAttributes<HTMLElement>
+								) => {
+									const { children, ...rest } = props;
+									return (
+										<CopyableText {...rest}>
+											{children}
+										</CopyableText>
+									);
+								},
 							},
 						}}
 					/>
