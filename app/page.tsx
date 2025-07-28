@@ -3,15 +3,20 @@
 import { nanoid } from "nanoid";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 export default function Home() {
 	const router = useRouter();
 	const [customPath, setCustomPath] = useState("");
+	const [origin, setOrigin] = useState("");
 
-	const origin = window.location.origin
-		.replace("https://", "")
-		.replace("http://", "");
+	useEffect(() => {
+		setOrigin(
+			window.location.origin
+				.replace("https://", "")
+				.replace("http://", "")
+		);
+	}, []);
 
 	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault();

@@ -11,9 +11,7 @@ const MDEditor = dynamic(
 );
 
 interface PageProps {
-	params: {
-		noteId: string;
-	};
+	params: Promise<{ noteId: string }>;
 }
 
 declare global {
@@ -45,8 +43,7 @@ async function getInitialContent(noteId: string, recaptchaToken: string) {
 }
 
 export default function NotePage({ params }: PageProps) {
-	// @ts-expect-error - params is not typed
-	const { noteId } = React.use<{ noteId: string }>(params);
+	const { noteId } = React.use(params);
 	const { content, setContent, isSaving } = useAutoSave(noteId);
 	const [showSaving, setShowSaving] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
