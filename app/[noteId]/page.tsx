@@ -16,9 +16,23 @@ interface PageProps {
 	};
 }
 
-async function getInitialContent(noteId: string) {
+declare global {
+	interface Window {
+		grecaptcha: {
+			ready: (callback: () => void) => void;
+			execute: (
+				siteKey: string,
+				options: { action: string }
+			) => Promise<string>;
+		};
+	}
+}
+
+async function getInitialContent(noteId: string, recaptchaToken: string) {
 	try {
-		const response = await fetch(`/api/notes?id=${noteId}`);
+		const response = await fetch(
+			`/api/notes?id=${noteId}&recaptchaToken=${recaptchaToken}`
+		);
 		if (!response.ok) {
 			throw new Error("Failed to fetch note");
 		}
@@ -35,6 +49,8 @@ export default function NotePage({ params }: PageProps) {
 	const { noteId } = React.use<{ noteId: string }>(params);
 	const { content, setContent, isSaving } = useAutoSave(noteId);
 	const [showSaving, setShowSaving] = useState(false);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
 		if (isSaving) {
@@ -48,12 +64,78 @@ export default function NotePage({ params }: PageProps) {
 	}, [isSaving]);
 
 	useEffect(() => {
-		const loadContent = async () => {
-			const initialContent = await getInitialContent(noteId);
-			setContent(initialContent);
+		// Load reCAPTCHA script
+		const script = document.createElement("script");
+		script.src = `https://www.google.com/recaptcha/api.js?render=${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`;
+		script.async = true;
+		script.defer = true;
+
+		script.onload = () => {
+			// Initialize content loading after script is loaded
+			const loadContent = async () => {
+				try {
+					await window.grecaptcha.ready(async () => {
+						const token = await window.grecaptcha.execute(
+							process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!,
+							{ action: "load_note" }
+						);
+
+						const initialContent = await getInitialContent(
+							noteId,
+							token
+						);
+						setContent(initialContent);
+						setIsLoading(false);
+					});
+				} catch (e) {
+					setError(
+						"Failed to verify human user. Please refresh the page."
+					);
+					console.error(e);
+					setIsLoading(false);
+				}
+			};
+
+			loadContent();
 		};
-		loadContent();
+
+		script.onerror = () => {
+			setError(
+				"Failed to load verification script. Please refresh the page."
+			);
+			setIsLoading(false);
+		};
+
+		document.head.appendChild(script);
+
+		return () => {
+			document.head.removeChild(script);
+		};
 	}, [noteId, setContent]);
+
+	if (error) {
+		return (
+			<div className="min-h-screen bg-black text-white flex items-center justify-center">
+				<div className="bg-red-900/50 p-4 rounded-lg text-center">
+					<p className="text-xl">{error}</p>
+					<button
+						onClick={() => window.location.reload()}
+						className="mt-4 px-4 py-2 bg-red-800 rounded hover:bg-red-700 transition-colors"
+					>
+						Retry
+					</button>
+				</div>
+			</div>
+		);
+	}
+
+	if (isLoading) {
+		return (
+			<div className="min-h-screen bg-black text-white flex items-center justify-center">
+				<div className="text-xl">Verifying human user...</div>
+			</div>
+		);
+	}
 
 	return (
 		<div data-color-mode="dark" className="min-h-screen bg-black relative">
@@ -70,9 +152,6 @@ export default function NotePage({ params }: PageProps) {
 			>
 				<div className={styles.editor}>
 					<MDEditor
-						style={{
-							backgroundColor: "black",
-						}}
 						value={content}
 						onChange={(value) => setContent(value || "")}
 						height={

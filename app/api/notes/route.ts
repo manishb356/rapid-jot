@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { rateLimit } from "../../../lib/rateLimit";
+import { verifyRecaptcha } from "../../../lib/recaptcha";
 import { supabase } from "../../../lib/supabase";
 
 // Rate limit config: 60 requests per minute
@@ -16,6 +17,7 @@ export async function GET(request: Request) {
 
 	const url = new URL(request.url);
 	const noteId = url.searchParams.get("id");
+	const recaptchaToken = url.searchParams.get("recaptchaToken");
 
 	if (!noteId) {
 		return NextResponse.json(
@@ -24,7 +26,23 @@ export async function GET(request: Request) {
 		);
 	}
 
+	if (!recaptchaToken) {
+		return NextResponse.json(
+			{ error: "reCAPTCHA verification required" },
+			{ status: 400 }
+		);
+	}
+
 	try {
+		// Verify reCAPTCHA token
+		const recaptchaResult = await verifyRecaptcha(recaptchaToken);
+		if (!recaptchaResult.success || recaptchaResult.score < 0.5) {
+			return NextResponse.json(
+				{ error: "reCAPTCHA verification failed" },
+				{ status: 403 }
+			);
+		}
+
 		const { data, error } = await supabase
 			.from("notes")
 			.select("content")
