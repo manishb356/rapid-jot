@@ -161,6 +161,7 @@ export default function NotePage({ params }: PageProps) {
 						visibleDragbar={false}
 						previewOptions={{
 							components: {
+								//@ts-nocheck
 								code: ({
 									children,
 								}: {
