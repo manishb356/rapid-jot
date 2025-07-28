@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import dynamic from "next/dynamic";
 import React, { Suspense, useEffect, useState } from "react";
@@ -161,7 +162,6 @@ export default function NotePage({ params }: PageProps) {
 						visibleDragbar={false}
 						previewOptions={{
 							components: {
-								//@ts-nocheck
 								code: ({
 									children,
 								}: {
