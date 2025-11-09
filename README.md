@@ -43,8 +43,10 @@ A simple, fast online note-taking app with markdown support. Similar to dontpad,
 4. Create a `.env.local` file in the root directory with the following variables:
 
     ```
-    NEXT_PUBLIC_SUPABASE_URL=your-project-url
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+    SUPABASE_URL=your-project-url
+    SUPABASE_ANON_KEY=your-anon-key
+    NEXT_PUBLIC_RECAPTCHA_SITE_KEY=your-public-recaptcha-site-key
+    RECAPTCHA_SECRET_KEY=your-recaptcha-secret-key
     ```
 
 5. Run the development server:
