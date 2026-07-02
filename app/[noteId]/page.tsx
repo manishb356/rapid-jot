@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import React, { Suspense, useEffect, useState } from "react";
 import CopyableText from "../../components/CopyableText";
 import { useAutoSave } from "../../hooks/useAutoSave";
+import rehypeSanitize from "rehype-sanitize";
 import styles from "../styles.module.css";
 
 const MDEditor = dynamic(
@@ -160,6 +161,7 @@ export default function NotePage({ params }: PageProps) {
 						extraCommands={[]}
 						visibleDragbar={false}
 						previewOptions={{
+							rehypePlugins: [[rehypeSanitize]],
 							components: {
 								code: (
 									props: React.HTMLAttributes<HTMLElement>
